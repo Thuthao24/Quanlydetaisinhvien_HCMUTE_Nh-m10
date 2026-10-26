@@ -174,12 +174,12 @@
         <span>Nhóm của bạn (<strong><span th:text="${nhomCuaToi.tennhom}">Nhóm</span></strong>) chưa đăng ký đề tài. Chức năng gửi đăng ký đề tài dành cho nhóm trưởng (<strong th:text="${nhomCuaToi.tenNhomtruong}">Nhóm trưởng</strong>).</span>
       </div>
 
-      <!-- Danh sách đề tài đã đăng ký: Dành cho Giảng viên, Trưởng bộ môn và Trưởng khoa duyệt/từ chối -->
-      <section class="panel-card" th:if="${vaitro == 'TRUONGKHOA' or vaitro == 'TRUONGBOMON' or vaitro == 'GIANGVIEN'}">
+      <!-- Danh sách đề tài đã đăng ký: Dành cho Giảng viên và Trưởng khoa duyệt/từ chối -->
+      <section class="panel-card" th:if="${vaitro == 'TRUONGKHOA' or vaitro == 'GIANGVIEN'}">
         <div class="panel-heading" style="padding-bottom: 8px;">
-          <h3 th:text="${vaitro == 'GIANGVIEN' ? 'DANH SÁCH NHÓM ĐĂNG KÝ ĐỀ TÀI CỦA BẠN' : (vaitro == 'TRUONGBOMON' ? 'DANH SÁCH ĐĂNG KÝ ĐỀ TÀI BỘ MÔN' : 'TẤT CẢ CÁC ĐĂNG KÝ ĐỀ TÀI')}">TẤT CẢ CÁC ĐĂNG KÝ ĐỀ TÀI</h3>
+          <h3 th:text="${vaitro == 'GIANGVIEN' ? 'DANH SÁCH NHÓM ĐĂNG KÝ ĐỀ TÀI CỦA BẠN' : 'TẤT CẢ CÁC ĐĂNG KÝ ĐỀ TÀI'}">TẤT CẢ CÁC ĐĂNG KÝ ĐỀ TÀI</h3>
           <p th:if="${vaitro == 'GIANGVIEN'}">Xét duyệt các nhóm sinh viên đăng ký đề tài do bạn hướng dẫn</p>
-          <p th:if="${vaitro == 'TRUONGBOMON'}">Xét duyệt các nhóm sinh viên đăng ký đề tài thuộc bộ môn</p>
+          
           <p th:if="${vaitro == 'TRUONGKHOA'}">Theo dõi và xét duyệt đề tài của toàn bộ sinh viên trong khoa</p>
         </div>
         <div class="table-toolbar">
@@ -223,7 +223,7 @@
                         th:text="${item.trangthai == T(com.example.quanlydetaisinhvien.entity.TrangthaiDangkydetai).DADUYET ? 'ĐÃ DUYỆT' : (item.trangthai == T(com.example.quanlydetaisinhvien.entity.TrangthaiDangkydetai).TUCHOI ? 'TỪ CHỐI' : 'CHỜ DUYỆT')}">CHODUYET</span>
                 </td>
                 <td>
-                  <div th:if="${(vaitro == 'TRUONGKHOA' or vaitro == 'TRUONGBOMON' or vaitro == 'GIANGVIEN') and item.trangthai == T(com.example.quanlydetaisinhvien.entity.TrangthaiDangkydetai).CHODUYET}" style="display: flex; gap: 4px;">
+                  <div th:if="${(vaitro == 'TRUONGKHOA' or vaitro == 'GIANGVIEN') and item.trangthai == T(com.example.quanlydetaisinhvien.entity.TrangthaiDangkydetai).CHODUYET}" style="display: flex; gap: 4px;">
                     <!-- Duyệt / Từ chối -->
                     <form th:action="@{'/dangkydetai/' + ${item.id} + '/duyet'}" method="post"
                           data-confirm="Xác nhận duyệt đề tài cho nhóm này?"
@@ -242,7 +242,7 @@
                       <button type="submit" class="btn btn-danger btn-sm">Từ chối</button>
                     </form>
                   </div>
-                  <span th:unless="${(vaitro == 'TRUONGKHOA' or vaitro == 'TRUONGBOMON' or vaitro == 'GIANGVIEN') and item.trangthai == T(com.example.quanlydetaisinhvien.entity.TrangthaiDangkydetai).CHODUYET}" class="badge">Không có thao tác</span>
+                  <span th:unless="${(vaitro == 'TRUONGKHOA' or vaitro == 'GIANGVIEN') and item.trangthai == T(com.example.quanlydetaisinhvien.entity.TrangthaiDangkydetai).CHODUYET}" class="badge">Không có thao tác</span>
                 </td>
               </tr>
               <tr th:if="${#lists.isEmpty(items)}">

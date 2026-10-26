@@ -266,9 +266,27 @@ public class DiemServiceImpl implements DiemService {
 
     @Override
     public Diem nhapDiem(DiemFormDto form) {
+        // P0: Tối ưu xác thực người dùng đầu tiên (Fail-Fast Authentication)
+        // Tránh chiếm dụng khóa CSDL nếu người gọi chưa đăng nhập hoặc không có quyền
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
+            throw new AccessDeniedException("Chưa đăng nhập.");
+        }
+        var teacher = currentLecturer();
+
         if (form == null || form.getDangkydetaiid() == null) {
             throw new NghiepvuException("Vui lòng chọn đề tài đăng ký");
         }
+        if (form.getDiemso() == null || form.getDiemso().compareTo(BigDecimal.ZERO) < 0
+                || form.getDiemso().compareTo(BigDecimal.TEN) > 0) {
+            throw new NghiepvuException("Điểm phải nằm trong thang điểm từ 0 đến 10");
+        }
+        if (form.getGiangvienid() != null && !form.getGiangvienid().equals(teacher.getId())) {
+            throw new AccessDeniedException("Giảng viên chỉ được nhập điểm cho chính mình, không được chấm thay giảng viên khác.");
+        }
+        Long gradingLecturerId = teacher.getId();
+        form.setGiangvienid(gradingLecturerId);
+
         var registration = registrations.findByIdForUpdate(form.getDangkydetaiid())
                 .orElseThrow(() -> new NghiepvuException("Không tìm thấy đăng ký đề tài."));
         if (registration.getTrangthai() != null && registration.getTrangthai() != TrangthaiDangkydetai.DADUYET) {
@@ -277,22 +295,6 @@ public class DiemServiceImpl implements DiemService {
         if (results.existsByDangkydetaiidAndDacongboTrue(form.getDangkydetaiid())) {
             throw new NghiepvuException("Kết quả đã công bố, không được sửa điểm.");
         }
-        if (form.getDiemso() == null || form.getDiemso().compareTo(BigDecimal.ZERO) < 0
-                || form.getDiemso().compareTo(BigDecimal.TEN) > 0) {
-            throw new NghiepvuException("Điểm phải nằm trong thang điểm từ 0 đến 10");
-        }
-
-        // P0: Kiểm tra xác thực và chống chấm thay (Anti-impersonation)
-        var auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
-            throw new AccessDeniedException("Chưa đăng nhập.");
-        }
-        var teacher = currentLecturer();
-        if (form.getGiangvienid() != null && !form.getGiangvienid().equals(teacher.getId())) {
-            throw new AccessDeniedException("Giảng viên chỉ được nhập điểm cho chính mình, không được chấm thay giảng viên khác.");
-        }
-        Long gradingLecturerId = teacher.getId();
-        form.setGiangvienid(gradingLecturerId);
 
         if (form.getId() != null) {
             var existing = repository.findById(form.getId())

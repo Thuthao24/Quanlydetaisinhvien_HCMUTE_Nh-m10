@@ -26,13 +26,12 @@ public class DashboardServiceImpl implements DashboardService {
     public void themSoLieuTheoVaiTro(Model model, Authentication authentication) {
         if (authentication == null) return;
         boolean truongKhoa = has(authentication, "TRUONGKHOA");
-        boolean truongBoMon = has(authentication, "TRUONGBOMON");
         boolean gv = has(authentication, "GIANGVIEN");
-        if (truongKhoa || truongBoMon || gv) {
+        if (truongKhoa || gv) {
             model.addAttribute("soDetai", detai.count());
             model.addAttribute("soHoidong", hoidong.count());
         }
-        if (truongKhoa || truongBoMon) {
+        if (truongKhoa) {
             model.addAttribute("soSinhvien", sinhvien.count());
             model.addAttribute("soGiangvien", giangvien.count());
         }

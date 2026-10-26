@@ -85,14 +85,15 @@ public class DisplayLookupService {
                                 case TRUONGKHOA ->
                                         "Trưởng khoa";
 
-                                case TRUONGBOMON ->
-                                        "Trưởng bộ môn";
+
 
                                 case GIANGVIEN ->
                                         "Giảng viên";
 
                                 case SINHVIEN ->
                                         "Sinh viên";
+                                default ->
+                                        "Chưa xác định";
                             };
         }
 

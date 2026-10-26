@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title ?: 'Chi tiết đề tài'}">Chi tiết đề tài</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <style>
+        .detai-detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px;
+            padding: 20px;
+        }
+        .detai-info-item {
+            padding: 14px 16px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+        }
+        .detai-info-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        .detai-info-value {
+            font-size: 14.5px;
+            font-weight: 600;
+            color: #1e293b;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+        .topic-desc-box {
+            padding: 20px;
+            font-size: 14.5px;
+            line-height: 1.7;
+            color: #334155;
+            white-space: pre-line;
+            background: #fff;
+        }
+        .action-bar-card {
+            padding: 16px 20px;
+            background: #f1f5f9;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+        .badge-status-choxuly { background: #fef3c7; color: #b45309; }
+        .badge-status-daduyet { background: #e0f2fe; color: #0369a1; }
+        .badge-status-congbo { background: #dcfce7; color: #15803d; }
+        .badge-status-tuchoi { background: #fee2e2; color: #b91c1c; }
+        .gvhd-tag {
+            display: inline-block;
+            background: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+            border-radius: 6px;
+            padding: 4px 10px;
+            margin-right: 6px;
+            margin-bottom: 4px;
+            font-size: 13.5px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+<div class="app-shell">
+    <div th:replace="~{fragments :: portalHeader}"></div>
+    <div class="portal-body">
+        <div th:replace="~{fragments :: sidebar('detai')}"></div>
+        <main class="main-panel">
+            <div class="page-heading">
+                <div>
+                    <div class="breadcrumb">
+                        <span>Cổng thông tin đào tạo</span> /
+                        <a th:href="@{/detai}" style="color: inherit; text-decoration: underline;">Đề tài</a> /
+                        <span>Chi tiết</span>
+                    </div>
+                    <h1 th:text="${item.tendetai}">CHI TIẾT ĐỀ TÀI</h1>
+                    <p>Xem thông tin chi tiết, giảng viên hướng dẫn, mục tiêu và trạng thái xét duyệt đề tài.</p>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <a th:href="@{/detai}" class="btn btn-secondary">← Quay lại danh sách</a>
+                    <a th:if="${canEdit}" th:href="@{'/giai-doan-1/detai/' + ${item.id} + '/sua'}" class="btn btn-primary">Chỉnh sửa đề tài</a>
+                </div>
+            </div>
+
+            <!-- Flash messages -->
+            <div th:if="${successMessage}" class="alert-box alert-success" style="margin-bottom: 20px; padding: 12px 16px; background: #e6f5ed; color: #2e7d5a; border-radius: 6px; font-weight: 600;" th:text="${successMessage}"></div>
+            <div th:if="${errorMessage}" class="alert-box alert-error" style="margin-bottom: 20px; padding: 12px 16px; background: #fde8e8; color: #c81e1e; border-radius: 6px; font-weight: 600;" th:text="${errorMessage}"></div>
+
+            <!-- Panel 1: Thông tin chung -->
+            <section class="panel-card" style="margin-bottom: 24px;">
+                <div class="panel-heading" style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3>THÔNG TIN CHUNG ĐỀ TÀI</h3>
+                    <div>
+                        <span th:if="${item.trangthai != null and item.trangthai.name() == 'CHO_DUYET'}" class="badge badge-status-choxuly">Chờ duyệt</span>
+                        <span th:if="${item.trangthai != null and item.trangthai.name() == 'DA_DUYET'}" class="badge badge-status-daduyet">Đã duyệt</span>
+                        <span th:if="${item.trangthai != null and item.trangthai.name() == 'CONGBO'}" class="badge badge-status-congbo">Đã công bố</span>
+                        <span th:if="${item.trangthai != null and item.trangthai.name() == 'TU_CHOI'}" class="badge badge-status-tuchoi">Từ chối</span>
+                    </div>
+                </div>
+
+                <div class="detai-detail-grid">
+                    <div class="detai-info-item">
+                        <span class="detai-info-label">Mã đề tài</span>
+                        <span class="detai-info-value" th:text="'#' + ${item.id}">#0</span>
+                    </div>
+                    <div class="detai-info-item">
+                        <span class="detai-info-label">Đợt đăng ký</span>
+                        <span class="detai-info-value" th:text="${roundName}">---</span>
+                    </div>
+                    <div class="detai-info-item">
+                        <span class="detai-info-label">Bộ môn phụ trách</span>
+                        <span class="detai-info-value" th:text="${departmentName}">---</span>
+                    </div>
+                    <div class="detai-info-item">
+                        <span class="detai-info-label">Giảng viên đề xuất</span>
+                        <span class="detai-info-value" th:text="${lecturerName}">---</span>
+                    </div>
+                    <div class="detai-info-item" style="grid-column: 1 / -1;">
+                        <span class="detai-info-label">Giảng viên hướng dẫn (GVHD)</span>
+                        <div class="detai-info-value" style="margin-top: 4px;">
+                            <span th:if="${#lists.isEmpty(gvhdNames)}" style="color: #94a3b8; font-weight: normal; font-style: italic;">Chưa có giảng viên hướng dẫn</span>
+                            <span th:each="gvName : ${gvhdNames}" class="gvhd-tag" th:text="${gvName}">GV Name</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Panel 2: Mô tả đề tài -->
+            <section class="panel-card" style="margin-bottom: 24px;">
+                <div class="panel-heading">
+                    <h3>MÔ TẢ CHI TIẾT & YÊU CẦU NGHIÊN CỨU</h3>
+                </div>
+                <div class="topic-desc-box" th:text="${item.mota != null and !#strings.isEmpty(item.mota) ? item.mota : 'Chưa có nội dung mô tả chi tiết cho đề tài này.'}">
+                    Nội dung mô tả đề tài...
+                </div>
+            </section>
+
+            <!-- Panel 3: Thao tác xét duyệt (dành cho Trưởng khoa khi đề tài Chờ duyệt) -->
+            <section class="panel-card" th:if="${canReview and item.trangthai != null and item.trangthai.name() == 'CHO_DUYET'}" style="margin-bottom: 24px; border-color: #f59e0b;">
+                <div class="panel-heading" style="background: #fffbeb;">
+                    <h3 style="color: #b45309;">XÉT DUYỆT ĐỀ TÀI</h3>
+                    <p style="color: #92400e;">Dành cho Trưởng khoa xét duyệt đề xuất này.</p>
+                </div>
+                <div class="action-bar-card">
+                    <form th:action="@{'/giai-doan-1/detai/' + ${item.id} + '/duyet'}" method="post" style="margin: 0; display: inline-block;">
+                        <input type="hidden" name="chapnhan" value="false" />
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('Bạn có chắc chắn muốn từ chối đề tài này?')">Từ chối đề tài</button>
+                    </form>
+                    <form th:action="@{'/giai-doan-1/detai/' + ${item.id} + '/duyet'}" method="post" style="margin: 0; display: inline-block;">
+                        <input type="hidden" name="chapnhan" value="true" />
+                        <button type="submit" class="btn btn-primary">Duyệt đề tài</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Panel 4: Thao tác công bố (dành cho Trưởng khoa khi đề tài Đã duyệt) -->
+            <section class="panel-card" th:if="${canPublish and item.trangthai != null and item.trangthai.name() == 'DA_DUYET'}" style="margin-bottom: 24px; border-color: #10b981;">
+                <div class="panel-heading" style="background: #ecfdf5;">
+                    <h3 style="color: #047857;">CÔNG BỐ ĐỀ TÀI</h3>
+                    <p style="color: #065f46;">Công bố đề tài để sinh viên có thể xem và đăng ký trong giai đoạn đăng ký.</p>
+                </div>
+                <div class="action-bar-card">
+                    <form th:action="@{'/giai-doan-1/detai/' + ${item.id} + '/congbo'}" method="post" style="margin: 0;">
+                        <button type="submit" class="btn btn-primary" style="background: #10b981; border-color: #059669;">Công bố cho sinh viên đăng ký</button>
+                    </form>
+                </div>
+            </section>
+        </main>
+    </div>
+</div>
+</body>
+</html>

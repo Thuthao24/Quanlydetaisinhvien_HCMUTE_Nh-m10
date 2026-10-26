@@ -16,7 +16,7 @@ CREATE TABLE Taikhoan (
     Matkhau VARCHAR(100) NOT NULL,
     Hoten VARCHAR(150) NOT NULL,
     Email VARCHAR(150) UNIQUE,
-    Vaitro ENUM('TRUONGKHOA','TRUONGBOMON','GIANGVIEN','SINHVIEN') NOT NULL,
+    Vaitro ENUM('TRUONGKHOA','GIANGVIEN','SINHVIEN') NOT NULL,
     Kichhoat BOOLEAN DEFAULT TRUE
 );
 
@@ -172,10 +172,10 @@ INSERT INTO Bomon(Id,Mabomon,Tenbomon) VALUES
 
 INSERT INTO Taikhoan(Id,Tendangnhap,Matkhau,Hoten,Email,Vaitro,Kichhoat) VALUES
 (1,'dean','$2y$10$3623ddbuke2GzQI7dDicneHEsJ8yMW1mi9LlRNBAQwDsALm5AK3z.','Nguyen Minh Khoa','dean@cntt.edu.vn','TRUONGKHOA',TRUE),
-(2,'gv001','$2y$10$3623ddbuke2GzQI7dDicneHEsJ8yMW1mi9LlRNBAQwDsALm5AK3z.','Tran Hoang Nam','gv001@cntt.edu.vn','TRUONGBOMON',TRUE),
-(3,'gv002','$2y$10$3623ddbuke2GzQI7dDicneHEsJ8yMW1mi9LlRNBAQwDsALm5AK3z.','Le Quang Huy','gv002@cntt.edu.vn','TRUONGBOMON',TRUE),
-(4,'gv003','$2y$10$3623ddbuke2GzQI7dDicneHEsJ8yMW1mi9LlRNBAQwDsALm5AK3z.','Pham Thu Ha','gv003@cntt.edu.vn','TRUONGBOMON',TRUE),
-(5,'gv004','$2y$10$3623ddbuke2GzQI7dDicneHEsJ8yMW1mi9LlRNBAQwDsALm5AK3z.','Vo Thanh Tung','gv004@cntt.edu.vn','TRUONGBOMON',TRUE),
+(2,'gv001','$2y$10$3623ddbuke2GzQI7dDicneHEsJ8yMW1mi9LlRNBAQwDsALm5AK3z.','Tran Hoang Nam','gv001@cntt.edu.vn','GIANGVIEN',TRUE),
+(3,'gv002','$2y$10$3623ddbuke2GzQI7dDicneHEsJ8yMW1mi9LlRNBAQwDsALm5AK3z.','Le Quang Huy','gv002@cntt.edu.vn','GIANGVIEN',TRUE),
+(4,'gv003','$2y$10$3623ddbuke2GzQI7dDicneHEsJ8yMW1mi9LlRNBAQwDsALm5AK3z.','Pham Thu Ha','gv003@cntt.edu.vn','GIANGVIEN',TRUE),
+(5,'gv004','$2y$10$3623ddbuke2GzQI7dDicneHEsJ8yMW1mi9LlRNBAQwDsALm5AK3z.','Vo Thanh Tung','gv004@cntt.edu.vn','GIANGVIEN',TRUE),
 (6,'gv005','$2y$10$3623ddbuke2GzQI7dDicneHEsJ8yMW1mi9LlRNBAQwDsALm5AK3z.','Nguyen Ngoc Lan','gv005@cntt.edu.vn','GIANGVIEN',TRUE),
 (7,'gv006','$2y$10$3623ddbuke2GzQI7dDicneHEsJ8yMW1mi9LlRNBAQwDsALm5AK3z.','Do Quoc Khanh','gv006@cntt.edu.vn','GIANGVIEN',TRUE),
 (8,'gv007','$2y$10$3623ddbuke2GzQI7dDicneHEsJ8yMW1mi9LlRNBAQwDsALm5AK3z.','Bui Minh Anh','gv007@cntt.edu.vn','GIANGVIEN',TRUE),

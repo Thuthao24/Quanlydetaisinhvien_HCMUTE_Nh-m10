@@ -2,7 +2,7 @@ package com.example.quanlydetaisinhvien.entity;
 
 /** The dean manages notices; only these three roles are recipients. */
 public enum DoituongThongbao {
-    SINHVIEN("Sinh viên"), GIANGVIEN("Giảng viên"), TRUONGBOMON("Trưởng bộ môn");
+    SINHVIEN("Sinh viên"), GIANGVIEN("Giảng viên");
     private final String label;
     DoituongThongbao(String label) { this.label=label; }
     public String getLabel() { return label; }

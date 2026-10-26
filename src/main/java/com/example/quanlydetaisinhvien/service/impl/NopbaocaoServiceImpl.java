@@ -261,6 +261,12 @@ public class NopbaocaoServiceImpl implements NopbaocaoService {
 
     @Override
     public Nopbaocao nopBaocao(NopBaoCaoRequest request, String currentUsername) {
+        // 1. Tối ưu theo góp ý của Hội đồng: Xác thực danh tính và vai trò người dùng TRƯỚC HẾT (Fail-Fast Authentication)
+        // Nếu người dùng chưa đăng nhập hoặc không phải Sinh viên / Trưởng khoa thì lập tức từ chối,
+        // ngăn chặn việc lãng phí tài nguyên máy chủ truy vấn CSDL và đọc tệp tin khi không có quyền.
+        Taikhoan tk = xacThucNguoiDung(currentUsername);
+
+        // 2. Kiểm tra tham số request cơ bản trong bộ nhớ (In-memory validation)
         if (request == null || request.getDangkydetaiid() == null) {
             throw new NghiepvuException("Vui lòng chọn đề tài cần nộp báo cáo");
         }
@@ -269,13 +275,19 @@ public class NopbaocaoServiceImpl implements NopbaocaoService {
             throw new NghiepvuException("Đường dẫn file báo cáo không được để trống");
         }
 
-        // Khóa bi quan bản ghi đăng ký đề tài để tránh xung đột với tiến trình chấm điểm
-        Dangkydetai dk = dangkydetaiRepository.findByIdForUpdate(request.getDangkydetaiid())
+        // 3. Đọc thông tin đăng ký đề tài bằng truy vấn thông thường (Non-blocking read)
+        // Lưu ý: Tuyệt đối không dùng khóa bi quan (pessimistic lock) ở đây vì việc nộp báo cáo chỉ thao tác
+        // trên bảng Nopbaocao, việc khóa bản ghi Dangkydetai sẽ gây tắc nghẽn giao dịch và làm cạn kiệt connection pool trên server Render.
+        Dangkydetai dk = dangkydetaiRepository.findById(request.getDangkydetaiid())
                 .orElseThrow(() -> new NghiepvuException("Không tìm thấy thông tin đăng ký đề tài"));
 
+        // 4. Đối soát quyền nhóm trưởng và trạng thái duyệt của đề tài
+        Sinhvien sinhvienNop = xacThucQuyenNhomTruong(dk, tk);
+
+        // 4. Kiểm tra trạng thái khóa nộp báo cáo (đã chấm điểm hoặc đã công bố kết quả)
         kiemTraKhoaNopBaoCao(request.getDangkydetaiid());
 
-        // Kiểm tra quyền sở hữu tệp theo canonical physical file: không cho phép mượn đường dẫn file của nhóm khác
+        // 5. Kiểm tra quyền sở hữu tệp theo canonical physical file: không cho phép mượn đường dẫn file của nhóm khác
         String duongdanfile = request.getDuongdanfile().trim();
         Path uploadRoot = Paths.get(uploadDirectory).toAbsolutePath().normalize();
         Path targetPhysical = layDuongDanVatLyHopLe(duongdanfile, uploadRoot);
@@ -286,10 +298,7 @@ public class NopbaocaoServiceImpl implements NopbaocaoService {
             throw new NghiepvuException("Tệp báo cáo này đã thuộc về đề tài khác, không được phép sử dụng lại.");
         }
 
-        Sinhvien sinhvienNop = xacThucNhomTruongNopBaoCao(dk, currentUsername);
-
-        // Kiểm tra xem đề tài này đã có bản ghi báo cáo chưa
-        // Nếu đã có: Cập nhật bản ghi hiện tại (nộp lại / thay thế), không tạo thêm bản ghi trùng lặp
+        // 6. Cập nhật bản ghi hiện tại nếu đã nộp trước đó (nộp lại / thay thế), không tạo thêm bản ghi trùng lặp
         Nopbaocao nb = repository.findFirstByDangkydetaiidOrderByIdDesc(request.getDangkydetaiid())
                 .orElse(new Nopbaocao());
 
@@ -303,6 +312,10 @@ public class NopbaocaoServiceImpl implements NopbaocaoService {
 
     @Override
     public Nopbaocao nopBaocaoVoiUpload(Long dangkydetaiid, MultipartFile file, String currentUsername) {
+        // 1. Tối ưu theo góp ý của Hội đồng: Xác thực danh tính và vai trò người dùng TRƯỚC HẾT (Fail-Fast Authentication)
+        Taikhoan tk = xacThucNguoiDung(currentUsername);
+
+        // 2. Kiểm tra tham số request và kiểm tra nhanh tệp tải lên (In-memory validation)
         if (dangkydetaiid == null) {
             throw new NghiepvuException("Vui lòng chọn đề tài cần nộp báo cáo");
         }
@@ -324,14 +337,18 @@ public class NopbaocaoServiceImpl implements NopbaocaoService {
             throw new NghiepvuException("Định dạng tệp không được hỗ trợ. Chỉ chấp nhận các định dạng: .pdf, .doc, .docx, .zip, .rar");
         }
 
-        // Khóa bi quan bản ghi đăng ký để đồng bộ hóa với việc chấm điểm đồng thời
-        Dangkydetai dk = dangkydetaiRepository.findByIdForUpdate(dangkydetaiid)
+        // 3. Đọc thông tin đăng ký đề tài (truy vấn non-blocking, tránh giữ khóa CSDL trong suốt quá trình I/O tệp)
+        Dangkydetai dk = dangkydetaiRepository.findById(dangkydetaiid)
                 .orElseThrow(() -> new NghiepvuException("Không tìm thấy thông tin đăng ký đề tài"));
 
-        kiemTraKhoaNopBaoCao(dangkydetaiid);
-        kiemTraDinhDangFileVoiMagicBytes(file, ext);
+        // 4. Đối soát quyền nhóm trưởng và trạng thái duyệt của đề tài
+        Sinhvien sinhvienNop = xacThucQuyenNhomTruong(dk, tk);
 
-        Sinhvien sinhvienNop = xacThucNhomTruongNopBaoCao(dk, currentUsername);
+        // 4. Kiểm tra trạng thái khóa nộp báo cáo
+        kiemTraKhoaNopBaoCao(dangkydetaiid);
+
+        // 5. Kiểm tra định dạng tệp bằng magic bytes thực tế
+        kiemTraDinhDangFileVoiMagicBytes(file, ext);
 
         String safeName = originalFilename.replaceAll("[^a-zA-Z0-9._-]", "_");
         String fileName = "dk_" + dangkydetaiid + "_" + System.currentTimeMillis() + "_" + UUID.randomUUID().toString().substring(0, 8) + "_" + safeName;
@@ -412,14 +429,25 @@ public class NopbaocaoServiceImpl implements NopbaocaoService {
 
     @Override
     public void xoaBaocao(Long id, String currentUsername) {
+        // 1. Tối ưu theo góp ý của Hội đồng: Xác thực danh tính người dùng TRƯỚC TIÊN (Fail-Fast)
+        Taikhoan tk = xacThucNguoiDung(currentUsername);
+
+        if (id == null) {
+            throw new NghiepvuException("Vui lòng chọn báo cáo cần xóa");
+        }
+
+        // 2. Tìm bản ghi báo cáo
         Nopbaocao nb = repository.findById(id)
                 .orElseThrow(() -> new NghiepvuException("Không tìm thấy báo cáo"));
 
-        Dangkydetai dk = dangkydetaiRepository.findByIdForUpdate(nb.getDangkydetaiid())
+        Dangkydetai dk = dangkydetaiRepository.findById(nb.getDangkydetaiid())
                 .orElseThrow(() -> new NghiepvuException("Không tìm thấy thông tin đăng ký đề tài"));
 
+        // 3. Đối soát quyền nhóm trưởng sở hữu đề tài
+        xacThucQuyenNhomTruong(dk, tk);
+
+        // 4. Kiểm tra xem đề tài đã bị khóa nộp/sửa báo cáo chưa (đã chấm điểm hoặc công bố)
         kiemTraKhoaNopBaoCao(nb.getDangkydetaiid());
-        xacThucNhomTruongNopBaoCao(dk, currentUsername);
 
         String oldFileDuongDan = nb.getDuongdanfile();
         repository.deleteById(id);
@@ -527,33 +555,29 @@ public class NopbaocaoServiceImpl implements NopbaocaoService {
 
     public boolean isFileReferencedByOtherRegistration(String duongdanfile, Long currentDkId) {
         if (duongdanfile == null || duongdanfile.trim().isEmpty()) return false;
-        Path uploadRoot = Paths.get(uploadDirectory).toAbsolutePath().normalize();
-        Path targetPath = layDuongDanVatLyHopLe(duongdanfile, uploadRoot);
+        String trimmed = duongdanfile.trim();
 
         if (repository != null) {
-            List<Nopbaocao> allReports = repository.findAll();
-            for (Nopbaocao r : allReports) {
-                if (r.getDangkydetaiid() != null && !r.getDangkydetaiid().equals(currentDkId)) {
-                    if (r.getDuongdanfile() != null) {
-                        // 1. So khớp chuỗi trực tiếp
-                        if (r.getDuongdanfile().trim().equalsIgnoreCase(duongdanfile.trim())) {
-                            return true;
-                        }
-                        // 2. So khớp đường dẫn chuẩn hóa và inode vật lý
-                        try {
-                            Path otherPath = layDuongDanVatLyHopLe(r.getDuongdanfile(), uploadRoot);
-                            if (targetPath != null && otherPath != null) {
-                                if (targetPath.equals(otherPath)) {
-                                    return true;
-                                }
-                                if (Files.exists(targetPath) && Files.exists(otherPath)) {
-                                    if (Files.isSameFile(targetPath, otherPath)) {
-                                        return true;
-                                    }
-                                }
+            // Tối ưu 1: Kiểm tra nhanh bằng truy vấn CSDL đích danh (Index-based, không tải toàn bộ bảng vào bộ nhớ Heap)
+            if (repository.existsByDuongdanfileAndDangkydetaiidNot(trimmed, currentDkId)) {
+                return true;
+            }
+
+            // Tối ưu 2: Đối soát đường dẫn vật lý chuẩn hóa qua danh sách chuỗi, tránh load toàn bộ Entity
+            Path uploadRoot = Paths.get(uploadDirectory).toAbsolutePath().normalize();
+            Path targetPath = layDuongDanVatLyHopLe(trimmed, uploadRoot);
+            if (targetPath != null && Files.exists(targetPath)) {
+                List<String> otherFiles = repository.findOtherDuongdanfiles(currentDkId);
+                for (String otherPathStr : otherFiles) {
+                    if (otherPathStr == null || otherPathStr.isBlank()) continue;
+                    try {
+                        Path otherPath = layDuongDanVatLyHopLe(otherPathStr, uploadRoot);
+                        if (otherPath != null && Files.exists(otherPath)) {
+                            if (targetPath.equals(otherPath) || Files.isSameFile(targetPath, otherPath)) {
+                                return true;
                             }
-                        } catch (Exception ignored) {
                         }
+                    } catch (Exception ignored) {
                     }
                 }
             }
@@ -570,24 +594,21 @@ public class NopbaocaoServiceImpl implements NopbaocaoService {
                 return;
             }
             if (repository != null) {
-                List<Nopbaocao> remaining = repository.findAll();
-                for (Nopbaocao r : remaining) {
-                    if (r.getDuongdanfile() != null) {
-                        if (r.getDuongdanfile().trim().equalsIgnoreCase(duongdanfile.trim())) {
-                            return; // Bảo toàn file nếu còn bản ghi CSDL tham chiếu cùng chuỗi
-                        }
-                        try {
-                            Path otherPath = layDuongDanVatLyHopLe(r.getDuongdanfile(), uploadDir);
-                            if (otherPath != null) {
-                                if (filePath.equals(otherPath)) {
-                                    return; // Bảo toàn file nếu chuẩn hóa cùng một đường dẫn
-                                }
-                                if (Files.exists(otherPath) && Files.isSameFile(filePath, otherPath)) {
-                                    return; // Bảo toàn file nếu chung inode vật lý
-                                }
+                // Tối ưu: Nếu còn bất kỳ bản ghi nào lưu đúng đường dẫn này thì bảo toàn tệp
+                if (repository.countByDuongdanfile(duongdanfile.trim()) > 0) {
+                    return;
+                }
+                List<String> allFiles = repository.findAllDuongdanfiles();
+                for (String otherPathStr : allFiles) {
+                    if (otherPathStr == null || otherPathStr.isBlank()) continue;
+                    try {
+                        Path otherPath = layDuongDanVatLyHopLe(otherPathStr, uploadDir);
+                        if (otherPath != null && Files.exists(otherPath)) {
+                            if (filePath.equals(otherPath) || Files.isSameFile(filePath, otherPath)) {
+                                return;
                             }
-                        } catch (Exception ignored) {
                         }
+                    } catch (Exception ignored) {
                     }
                 }
             }
@@ -596,17 +617,25 @@ public class NopbaocaoServiceImpl implements NopbaocaoService {
         }
     }
 
-    private Sinhvien xacThucNhomTruongNopBaoCao(Dangkydetai dk, String currentUsername) {
+    private Taikhoan xacThucNguoiDung(String currentUsername) {
         if (currentUsername == null || currentUsername.trim().isEmpty()) {
-            throw new NghiepvuException("Người chưa đăng nhập không được phép nộp báo cáo");
+            throw new NghiepvuException("Người chưa đăng nhập không được phép thao tác báo cáo");
         }
 
+        Taikhoan tk = taikhoanRepository.findByTendangnhap(currentUsername.trim())
+                .orElseThrow(() -> new NghiepvuException("Tài khoản người dùng không tồn tại"));
+
+        if (tk.getVaitro() != Vaitro.SINHVIEN && tk.getVaitro() != Vaitro.TRUONGKHOA) {
+            throw new NghiepvuException("Chỉ sinh viên là nhóm trưởng mới được phép nộp báo cáo");
+        }
+
+        return tk;
+    }
+
+    private Sinhvien xacThucQuyenNhomTruong(Dangkydetai dk, Taikhoan tk) {
         if (dk == null) {
             throw new NghiepvuException("Không tìm thấy thông tin đăng ký đề tài");
         }
-
-        Taikhoan tk = taikhoanRepository.findByTendangnhap(currentUsername)
-                .orElseThrow(() -> new NghiepvuException("Tài khoản người dùng không tồn tại"));
 
         if (dk.getTrangthai() != null && dk.getTrangthai() != TrangthaiDangkydetai.DADUYET) {
             throw new NghiepvuException("Chỉ được nộp báo cáo khi đề tài của nhóm đã được duyệt chính thức (Trạng thái hiện tại: " + dk.getTrangthai() + ")");
@@ -621,13 +650,8 @@ public class NopbaocaoServiceImpl implements NopbaocaoService {
                     .orElseThrow(() -> new NghiepvuException("Không tìm thấy thông tin nhóm trưởng"));
         }
 
-        // Nếu không phải SINHVIEN: từ chối
-        if (tk.getVaitro() != Vaitro.SINHVIEN) {
-            throw new NghiepvuException("Chỉ sinh viên là nhóm trưởng mới được phép nộp báo cáo");
-        }
-
         // Lấy thông tin sinh viên từ tài khoản đăng nhập (Bảo mật: không tin mã client gửi)
-        Sinhvien sv = sinhvienRepository.findByMasinhvien(currentUsername)
+        Sinhvien sv = sinhvienRepository.findByMasinhvien(tk.getTendangnhap())
                 .orElseThrow(() -> new NghiepvuException("Không tìm thấy hồ sơ sinh viên tương ứng với tài khoản đăng nhập"));
 
         // Kiểm tra sinh viên có đúng là nhóm trưởng của nhóm sở hữu đề tài này không
@@ -636,6 +660,11 @@ public class NopbaocaoServiceImpl implements NopbaocaoService {
         }
 
         return sv;
+    }
+
+    private Sinhvien xacThucNhomTruongNopBaoCao(Dangkydetai dk, String currentUsername) {
+        Taikhoan tk = xacThucNguoiDung(currentUsername);
+        return xacThucQuyenNhomTruong(dk, tk);
     }
     @Value("${app.upload.dir:uploads/baocao}")
         private String uploadDirectory;

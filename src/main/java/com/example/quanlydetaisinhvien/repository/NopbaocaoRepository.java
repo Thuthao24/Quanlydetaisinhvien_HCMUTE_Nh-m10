@@ -16,4 +16,10 @@ public interface NopbaocaoRepository extends JpaRepository<Nopbaocao, Long> {
 
     boolean existsByDuongdanfileAndDangkydetaiidNot(String duongdanfile, Long dangkydetaiid);
     long countByDuongdanfile(String duongdanfile);
+
+    @org.springframework.data.jpa.repository.Query("SELECT n.duongdanfile FROM Nopbaocao n WHERE n.dangkydetaiid <> :currentDkId AND n.duongdanfile IS NOT NULL")
+    List<String> findOtherDuongdanfiles(@org.springframework.data.repository.query.Param("currentDkId") Long currentDkId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT n.duongdanfile FROM Nopbaocao n WHERE n.duongdanfile IS NOT NULL")
+    List<String> findAllDuongdanfiles();
 }

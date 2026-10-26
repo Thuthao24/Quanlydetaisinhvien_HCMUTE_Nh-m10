@@ -101,7 +101,6 @@ public class DetaiController {
                 )
         );
 
-
         model.addAttribute("filterOptions", search.options(MorongPermissions.Dataset.DETAI));
         model.addAttribute("exportOptions", valid ? ExportLinks.search(ExportModels.Dataset.DETAI, filter)
                 : SearchModels.ExportOptions.unavailable());
@@ -112,6 +111,51 @@ public class DetaiController {
         model.addAttribute("canProposeTopic", gd1.canPropose(authentication.getName()));
         model.addAttribute("editableIds", gd1.editableTopicIds(authentication.getName(), items));
         return "detai-list";
+    }
+
+    @GetMapping("/{id}")
+    public String detail(@PathVariable Long id, Model model, Authentication authentication) {
+        Detai item = service.findById(id)
+                .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.NOT_FOUND, "Không tìm thấy đề tài"));
+
+        model.addAttribute("title", "Chi tiết đề tài - " + item.getTendetai());
+        model.addAttribute("item", item);
+
+        // 1. Tên đợt
+        model.addAttribute("roundName", lookup.roundNames(java.util.List.of(item.getDotdangkyid()))
+                .getOrDefault(item.getDotdangkyid(), "—"));
+
+        // 2. Tên bộ môn
+        model.addAttribute("departmentName", lookup.departmentNames(java.util.List.of(item.getBomonid()))
+                .getOrDefault(item.getBomonid(), "—"));
+
+        // 3. Tên giảng viên đề xuất
+        model.addAttribute("lecturerName", lookup.lecturerNames(java.util.List.of(item.getGiangviendexuatid()))
+                .getOrDefault(item.getGiangviendexuatid(), "—"));
+
+        // 4. Danh sách giảng viên hướng dẫn
+        var gvhdList = gd1.dsGvhd(id);
+        var gvhdIds = gvhdList.stream()
+                .map(com.example.quanlydetaisinhvien.entity.Giangvienhuongdan::getGiangvienid)
+                .toList();
+        var gvhdNamesMap = lookup.lecturerNames(gvhdIds);
+        var gvhdNames = gvhdIds.stream()
+                .map(gvId -> gvhdNamesMap.getOrDefault(gvId, "GV #" + gvId))
+                .toList();
+        model.addAttribute("gvhdNames", gvhdNames);
+
+        // 5. Quyền chỉnh sửa
+        String username = authentication != null ? authentication.getName() : "";
+        model.addAttribute("canEdit", gd1.canEditTopic(username, item));
+
+        // 6. Quyền duyệt / công bố
+        boolean isTruongKhoa = authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_TRUONGKHOA"));
+        model.addAttribute("canReview", isTruongKhoa);
+        model.addAttribute("canPublish", isTruongKhoa);
+
+        return "detai-detail";
     }
 
     @ExceptionHandler({IllegalArgumentException.class, ConstraintViolationException.class})

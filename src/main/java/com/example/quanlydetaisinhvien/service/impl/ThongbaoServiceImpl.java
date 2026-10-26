@@ -25,8 +25,7 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class ThongbaoServiceImpl implements ThongbaoService {
     private static final Sort NEWEST_FIRST = Sort.by(Sort.Order.desc("ngaydang"), Sort.Order.desc("id"));
-    private static final Set<String> READ_ROLES = Set.of("ROLE_TRUONGKHOA", "ROLE_TRUONGBOMON",
-            "ROLE_GIANGVIEN", "ROLE_SINHVIEN");
+    private static final Set<String> READ_ROLES = Set.of("ROLE_TRUONGKHOA", "ROLE_GIANGVIEN", "ROLE_SINHVIEN");
     private final ThongbaoRepository repository;
     private final TaikhoanRepository accounts;
     private final Validator validator;

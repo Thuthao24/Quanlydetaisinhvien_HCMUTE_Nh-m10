@@ -52,7 +52,6 @@ public class GlobalModelAttributes
 
     private static final Set<String> NOTICE_READ_ROLES = Set.of(
             "ROLE_TRUONGKHOA",
-            "ROLE_TRUONGBOMON",
             "ROLE_GIANGVIEN",
             "ROLE_SINHVIEN"
     );

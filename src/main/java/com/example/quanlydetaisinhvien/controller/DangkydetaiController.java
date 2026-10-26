@@ -72,7 +72,7 @@ public class DangkydetaiController {
             model.addAttribute("laNhomTruong", true);
             model.addAttribute("nhomCuaToi", null);
             model.addAttribute("dangKyCuaNhom", null);
-        } else if ("TRUONGBOMON".equals(cleanRole) || "GIANGVIEN".equals(cleanRole)) {
+        } else if ("GIANGVIEN".equals(cleanRole)) {
             model.addAttribute("items", service.layDanhSachDangKyChoUser(username));
             model.addAttribute("dsNhom", new ArrayList<Nhomsinhvien>());
             model.addAttribute("dsDetaiCongBo", new ArrayList<Detai>());

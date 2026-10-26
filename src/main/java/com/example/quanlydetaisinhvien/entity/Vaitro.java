@@ -1,5 +1,5 @@
 package com.example.quanlydetaisinhvien.entity;
 
 public enum Vaitro {
-    TRUONGKHOA, TRUONGBOMON, GIANGVIEN, SINHVIEN
+    TRUONGKHOA, GIANGVIEN, SINHVIEN, @Deprecated TRUONGBOMON
 }

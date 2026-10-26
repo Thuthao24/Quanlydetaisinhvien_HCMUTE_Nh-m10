@@ -55,7 +55,7 @@ public class DiemController {
     }
 
     @PostMapping("/tao")
-    @PreAuthorize("hasAnyRole('TRUONGKHOA','TRUONGBOMON','GIANGVIEN')")
+    @PreAuthorize("hasAnyRole('TRUONGKHOA','GIANGVIEN')")
     public String create(@ModelAttribute Diem score, RedirectAttributes flash) {
         try {
             service.save(score);
@@ -67,7 +67,7 @@ public class DiemController {
     }
 
     @GetMapping({"/them", "/nhap"})
-    @PreAuthorize("hasAnyRole('TRUONGKHOA','TRUONGBOMON','GIANGVIEN')")
+    @PreAuthorize("hasAnyRole('TRUONGKHOA','GIANGVIEN')")
     public String themForm(Model model) {
         model.addAttribute("title", "Nhập điểm thành phần");
         DiemFormDto form = new DiemFormDto();
@@ -81,7 +81,7 @@ public class DiemController {
     }
 
     @PostMapping({"/them", "/nhap"})
-    @PreAuthorize("hasAnyRole('TRUONGKHOA','TRUONGBOMON','GIANGVIEN')")
+    @PreAuthorize("hasAnyRole('TRUONGKHOA','GIANGVIEN')")
     public String themSubmit(@ModelAttribute("form") DiemFormDto form,
                              Model model,
                              RedirectAttributes redirectAttributes) {
@@ -112,7 +112,7 @@ public class DiemController {
     }
 
     @GetMapping("/sua/{id}")
-    @PreAuthorize("hasAnyRole('TRUONGKHOA','TRUONGBOMON','GIANGVIEN')")
+    @PreAuthorize("hasAnyRole('TRUONGKHOA','GIANGVIEN')")
     public String suaForm(@PathVariable Long id, Model model) {
         try {
             DiemFormDto form = service.getFormDtoById(id);
@@ -126,7 +126,7 @@ public class DiemController {
     }
 
     @PostMapping("/sua/{id}")
-    @PreAuthorize("hasAnyRole('TRUONGKHOA','TRUONGBOMON','GIANGVIEN')")
+    @PreAuthorize("hasAnyRole('TRUONGKHOA','GIANGVIEN')")
     public String suaSubmit(@PathVariable Long id,
                             @ModelAttribute("form") DiemFormDto form,
                             Model model,
@@ -159,7 +159,7 @@ public class DiemController {
     }
 
     @PostMapping("/xoa/{id}")
-    @PreAuthorize("hasAnyRole('TRUONGKHOA','TRUONGBOMON')")
+    @PreAuthorize("hasRole('TRUONGKHOA')")
     public String xoaSubmit(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
             service.xoaDiem(id);
@@ -171,7 +171,7 @@ public class DiemController {
     }
 
     @PostMapping("/tinh-ket-qua/{dangkydetaiid}")
-    @PreAuthorize("hasAnyRole('TRUONGKHOA','TRUONGBOMON')")
+    @PreAuthorize("hasRole('TRUONGKHOA')")
     public String tinhKetQuaSubmit(@PathVariable Long dangkydetaiid, RedirectAttributes redirectAttributes) {
         try {
             service.tinhKetQuaTrungGian(dangkydetaiid);

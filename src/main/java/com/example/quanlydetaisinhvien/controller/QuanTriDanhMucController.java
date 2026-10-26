@@ -31,7 +31,7 @@ public class QuanTriDanhMucController {
     private void person(Model m,String type,QuanTriDanhMucForm f,Long id){
         m.addAttribute("title",id==null?"Tạo "+type:"Sửa "+type);m.addAttribute("id",id);
         m.addAttribute("form",f);m.addAttribute("type",type);m.addAttribute("bomons",svc.bomonList());
-        m.addAttribute("roles",new Vaitro[]{Vaitro.GIANGVIEN,Vaitro.TRUONGBOMON});
+        m.addAttribute("roles",new Vaitro[]{Vaitro.GIANGVIEN});
     }
     @GetMapping("/giangvien/tao") public String gvTao(Model m){QuanTriDanhMucForm f=new QuanTriDanhMucForm();f.setVaitro(Vaitro.GIANGVIEN);person(m,"giangvien",f,null);return "quanly/person-form";}
     @GetMapping("/giangvien/{id}/sua") public String gvSua(@PathVariable Long id,Model m){person(m,"giangvien",svc.formGV(id),id);return "quanly/person-form";}

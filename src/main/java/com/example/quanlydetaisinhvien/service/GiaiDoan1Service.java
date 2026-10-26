@@ -100,6 +100,18 @@ public class GiaiDoan1Service {
         return bomons.findAll();
     }
 
+    public Giangvien findTeacherByUsername(String username) {
+        if (username == null || username.isBlank()) return null;
+        return taikhoans.findByTendangnhap(username)
+                .flatMap(acc -> gv.findByTaikhoanid(acc.getId()))
+                .orElse(null);
+    }
+
+    public Giangvien findTeacherById(Long id) {
+        if (id == null) return null;
+        return gv.findById(id).orElse(null);
+    }
+
     // ===== PHAN QUYEN =====
 
     private Taikhoan user(String username) {
@@ -113,7 +125,6 @@ public class GiaiDoan1Service {
 
     private boolean isTeacher(Vaitro role) {
         return role == Vaitro.GIANGVIEN
-            || role == Vaitro.TRUONGBOMON
             || role == Vaitro.TRUONGKHOA;
     }
 
@@ -403,7 +414,7 @@ public class GiaiDoan1Service {
         if (f.getGvhd2() != null) {
             if (f.getGvhd1().equals(f.getGvhd2())) {
                 throw new NghiepvuException(
-                    "Hai GVHD phải khác nhau");
+                    "GV hướng dẫn 2 không được trùng với giảng viên đề xuất (GVHD 1)");
             }
             guides.add(f.getGvhd2());
         }
@@ -434,10 +445,11 @@ public class GiaiDoan1Service {
         activeProposal(lockDot(f.getDotdangkyid()));
 
         Detai e;
+        Long proposerId;
         if (id == null) {
             e = new Detai();
-            e.setGiangviendexuatid(
-                currentTeacher(username).getId());
+            proposerId = currentTeacher(username).getId();
+            e.setGiangviendexuatid(proposerId);
         } else {
             e = detai(id);
 
@@ -451,7 +463,11 @@ public class GiaiDoan1Service {
                 throw new NghiepvuException(
                     "Không được đổi đợt của đề tài đã tạo");
             }
+            proposerId = e.getGiangviendexuatid();
         }
+
+        // Đảm bảo người đề xuất luôn là GVHD 1 (GVHD chính)
+        f.setGvhd1(proposerId);
 
         if (f.getBomonid() == null
                 || !bomons.existsById(f.getBomonid())) {

@@ -1,0 +1,276 @@
+// ===================================================================
+// DBML (Database Markup Language) cho dbdiagram.io
+// Project: Hệ thống Quản lý Đề tài Sinh viên - LTWEBCK
+// Định danh: Tiếng Việt không dấu, snake_case
+// ===================================================================
+
+Table vai_tro {
+  id int [pk, increment]
+  ten_vai_tro varchar(50) [unique, not null, note: 'ROLE_ADMIN, ROLE_TRUONG_KHOA, ROLE_GIANG_VIEN, ROLE_SINH_VIEN']
+  mo_ta varchar(255)
+}
+
+Table nguoi_dung {
+  id bigint [pk, increment]
+  ten_dang_nhap varchar(50) [unique, not null]
+  mat_khau varchar(255) [not null, note: 'BCrypt hash $2a$...']
+  ho_ten varchar(100) [not null]
+  email varchar(100) [unique, not null]
+  so_dien_thoai varchar(20)
+  trang_thai varchar(20) [not null, default: 'ACTIVE']
+  ngay_tao timestamp [default: `now()`]
+  ngay_cap_nhat timestamp
+}
+
+Table nguoi_dung_vai_tro {
+  nguoi_dung_id bigint [not null]
+  vai_tro_id int [not null]
+
+  indexes {
+    (nguoi_dung_id, vai_tro_id) [pk]
+  }
+}
+
+Table khoa {
+  id int [pk, increment]
+  ma_khoa varchar(20) [unique, not null]
+  ten_khoa varchar(150) [not null]
+  mo_ta text
+}
+
+Table bo_mon {
+  id int [pk, increment]
+  khoa_id int [not null]
+  ma_bo_mon varchar(20) [unique, not null]
+  ten_bo_mon varchar(150) [not null]
+  mo_ta text
+}
+
+Table giang_vien {
+  id bigint [pk, increment]
+  nguoi_dung_id bigint [unique, not null]
+  ma_giang_vien varchar(20) [unique, not null]
+  hoc_vi varchar(50) [not null, default: 'Thạc sĩ']
+  bo_mon_id int [not null]
+}
+
+Table sinh_vien {
+  id bigint [pk, increment]
+  nguoi_dung_id bigint [unique, not null]
+  ma_sinh_vien varchar(20) [unique, not null]
+  lop varchar(50) [not null]
+  chuyen_nganh varchar(100) [not null]
+  bo_mon_id int [not null]
+}
+
+Table dot_dang_ky {
+  id bigint [pk, increment]
+  ten_dot varchar(150) [not null]
+  loai_dot varchar(50) [not null, note: 'MON_HOC, NCKH, TLCN, KLTN']
+  ngay_bat_dau_giang_vien datetime [not null]
+  ngay_ket_thuc_giang_vien datetime [not null]
+  ngay_bat_dau_sinh_vien datetime [not null]
+  ngay_ket_thuc_sinh_vien datetime [not null]
+  han_nop_diem_phan_bien datetime
+  ngay_bao_cao datetime
+  trang_thai varchar(30) [not null, default: 'DRAFT', note: 'DRAFT, PHASE_1, PHASE_2, CLOSED']
+  nguoi_tao_id bigint [not null]
+  ngay_tao timestamp [default: `now()`]
+}
+
+Table de_tai {
+  id bigint [pk, increment]
+  ma_de_tai varchar(30) [unique, not null]
+  ten_de_tai varchar(255) [not null]
+  mo_ta text [not null]
+  bo_mon_id int [not null]
+  dot_dang_ky_id bigint [not null]
+  so_thanh_vien_toi_da int [not null, default: 3]
+  trang_thai varchar(30) [not null, default: 'DRAFT']
+  ly_do_tu_choi varchar(255)
+  ngay_tao timestamp [default: `now()`]
+  ngay_cap_nhat timestamp
+}
+
+Table giang_vien_huong_dan {
+  id bigint [pk, increment]
+  de_tai_id bigint [not null]
+  giang_vien_id bigint [not null]
+  vai_tro_huong_dan varchar(30) [not null, default: 'MAIN', note: 'MAIN, CO_ADVISOR']
+
+  indexes {
+    (de_tai_id, giang_vien_id) [unique]
+  }
+}
+
+Table giang_vien_phan_bien {
+  id bigint [pk, increment]
+  de_tai_id bigint [not null]
+  giang_vien_id bigint [not null]
+  ngay_phan_cong timestamp [default: `now()`]
+
+  indexes {
+    (de_tai_id, giang_vien_id) [unique]
+  }
+}
+
+Table nhom_sinh_vien {
+  id bigint [pk, increment]
+  ma_nhom varchar(30) [unique, not null]
+  ten_nhom varchar(100) [not null]
+  dot_dang_ky_id bigint [not null]
+  nhom_truong_id bigint [not null]
+  trang_thai varchar(30) [not null, default: 'ACTIVE']
+  ngay_tao timestamp [default: `now()`]
+}
+
+Table thanh_vien_nhom {
+  id bigint [pk, increment]
+  nhom_id bigint [not null]
+  sinh_vien_id bigint [not null]
+  ngay_tham_gia timestamp [default: `now()`]
+
+  indexes {
+    (nhom_id, sinh_vien_id) [unique]
+  }
+}
+
+Table dang_ky_de_tai {
+  id bigint [pk, increment]
+  nhom_id bigint [unique, not null]
+  de_tai_id bigint [not null]
+  ngay_dang_ky timestamp [default: `now()`]
+  trang_thai varchar(30) [not null, default: 'PENDING', note: 'PENDING, APPROVED, REJECTED']
+  ghi_chu varchar(255)
+}
+
+Table bao_cao_de_tai {
+  id bigint [pk, increment]
+  nhom_id bigint [not null]
+  de_tai_id bigint [not null]
+  tieu_de varchar(200) [not null]
+  ten_file varchar(255) [not null]
+  duong_dan_file varchar(255) [not null]
+  kich_thuoc_file bigint [not null]
+  phien_ban int [not null, default: 1]
+  nguoi_nop_id bigint [not null]
+  ngay_nop timestamp [default: `now()`]
+  ghi_chu text
+  nhan_xet_giang_vien text
+  trang_thai varchar(30) [not null, default: 'SUBMITTED', note: 'SUBMITTED, REVIEWED']
+}
+
+Table hoi_dong {
+  id bigint [pk, increment]
+  ma_hoi_dong varchar(30) [unique, not null]
+  ten_hoi_dong varchar(150) [not null]
+  dot_dang_ky_id bigint [not null]
+  dia_diem varchar(100) [not null]
+  ngay_bao_ve datetime [not null]
+  trang_thai varchar(30) [not null, default: 'CREATED', note: 'CREATED, ACTIVE, FINISHED']
+  ngay_tao timestamp [default: `now()`]
+}
+
+Table thanh_vien_hoi_dong {
+  id bigint [pk, increment]
+  hoi_dong_id bigint [not null]
+  giang_vien_id bigint [not null]
+  vai_tro varchar(30) [not null, default: 'MEMBER', note: 'CHAIRMAN, SECRETARY, MEMBER']
+
+  indexes {
+    (hoi_dong_id, giang_vien_id) [unique]
+  }
+}
+
+Table de_tai_hoi_dong {
+  id bigint [pk, increment]
+  hoi_dong_id bigint [not null]
+  de_tai_id bigint [unique, not null]
+  thu_tu_bao_ve int [not null, default: 1]
+  gio_bao_ve time
+}
+
+Table danh_gia_de_tai {
+  id bigint [pk, increment]
+  de_tai_id bigint [not null]
+  giang_vien_id bigint [not null]
+  diem decimal(4,2) [not null]
+  nhan_xet text
+  ngay_cham timestamp [default: `now()`]
+
+  indexes {
+    (de_tai_id, giang_vien_id) [unique]
+  }
+}
+
+Table ket_qua_de_tai {
+  id bigint [pk, increment]
+  de_tai_id bigint [unique, not null]
+  diem_trung_binh decimal(4,2) [not null]
+  xep_loai varchar(20) [not null, note: 'XUAT_SAC, GIOI, KHA, TRUNG_BINH, KHONG_DAT']
+  trang_thai varchar(30) [not null, default: 'PENDING_PUBLISH', note: 'PENDING_PUBLISH, PUBLISHED']
+  ngay_cong_bo datetime
+  nguoi_cong_bo_id bigint
+}
+
+Table thong_bao {
+  id bigint [pk, increment]
+  tieu_de varchar(255) [not null]
+  noi_dung text [not null]
+  kich_hoat boolean [not null, default: true]
+  nguoi_tao_id bigint [not null]
+  ngay_tao timestamp [default: `now()`]
+  ngay_cap_nhat timestamp
+}
+
+// Relationships
+Ref: nguoi_dung_vai_tro.nguoi_dung_id > nguoi_dung.id [delete: cascade]
+Ref: nguoi_dung_vai_tro.vai_tro_id > vai_tro.id [delete: cascade]
+
+Ref: bo_mon.khoa_id > khoa.id
+
+Ref: giang_vien.nguoi_dung_id - nguoi_dung.id [delete: cascade]
+Ref: giang_vien.bo_mon_id > bo_mon.id
+
+Ref: sinh_vien.nguoi_dung_id - nguoi_dung.id [delete: cascade]
+Ref: sinh_vien.bo_mon_id > bo_mon.id
+
+Ref: dot_dang_ky.nguoi_tao_id > nguoi_dung.id
+
+Ref: de_tai.bo_mon_id > bo_mon.id
+Ref: de_tai.dot_dang_ky_id > dot_dang_ky.id
+
+Ref: giang_vien_huong_dan.de_tai_id > de_tai.id [delete: cascade]
+Ref: giang_vien_huong_dan.giang_vien_id > giang_vien.id
+
+Ref: giang_vien_phan_bien.de_tai_id > de_tai.id [delete: cascade]
+Ref: giang_vien_phan_bien.giang_vien_id > giang_vien.id
+
+Ref: nhom_sinh_vien.dot_dang_ky_id > dot_dang_ky.id
+Ref: nhom_sinh_vien.nhom_truong_id > sinh_vien.id
+
+Ref: thanh_vien_nhom.nhom_id > nhom_sinh_vien.id [delete: cascade]
+Ref: thanh_vien_nhom.sinh_vien_id > sinh_vien.id
+
+Ref: dang_ky_de_tai.nhom_id - nhom_sinh_vien.id [delete: cascade]
+Ref: dang_ky_de_tai.de_tai_id > de_tai.id
+
+Ref: bao_cao_de_tai.nhom_id > nhom_sinh_vien.id [delete: cascade]
+Ref: bao_cao_de_tai.de_tai_id > de_tai.id
+Ref: bao_cao_de_tai.nguoi_nop_id > sinh_vien.id
+
+Ref: hoi_dong.dot_dang_ky_id > dot_dang_ky.id
+
+Ref: thanh_vien_hoi_dong.hoi_dong_id > hoi_dong.id [delete: cascade]
+Ref: thanh_vien_hoi_dong.giang_vien_id > giang_vien.id
+
+Ref: de_tai_hoi_dong.hoi_dong_id > hoi_dong.id [delete: cascade]
+Ref: de_tai_hoi_dong.de_tai_id - de_tai.id
+
+Ref: danh_gia_de_tai.de_tai_id > de_tai.id [delete: cascade]
+Ref: danh_gia_de_tai.giang_vien_id > giang_vien.id
+
+Ref: ket_qua_de_tai.de_tai_id - de_tai.id [delete: cascade]
+Ref: ket_qua_de_tai.nguoi_cong_bo_id > nguoi_dung.id
+
+Ref: thong_bao.nguoi_tao_id > nguoi_dung.id

@@ -77,8 +77,8 @@ public class QuanTriDanhMucService {
     private String normalEmail(String email){return email==null||email.isBlank()?null:email.trim();}
     public void saveGV(Long id,QuanTriDanhMucForm f){
         validPerson(f,id==null);
-        Vaitro role=f.getVaitro();if(role!=Vaitro.GIANGVIEN&&role!=Vaitro.TRUONGBOMON)
-            throw new NghiepvuException("Vai trò phải là GIANGVIEN hoặc TRUONGBOMON");
+        Vaitro role=f.getVaitro();if(role!=Vaitro.GIANGVIEN)
+            throw new NghiepvuException("Vai trò phải là GIANGVIEN");
         if(id==null){
             if(gvs.existsByMagiangvienIgnoreCase(f.getMa().trim()))throw new NghiepvuException("Mã GV trùng");
             checkEmail(f.getEmail(),null);

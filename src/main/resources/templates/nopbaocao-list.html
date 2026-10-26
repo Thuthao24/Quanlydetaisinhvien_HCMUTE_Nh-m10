@@ -218,7 +218,7 @@
                        style="text-decoration: none; display: inline-flex; align-items: center;">
                       Tải xuống
                     </a>
-                    <form th:if="${!item.daKhoa && ((laNhomTruong && dangKyCuaNhom != null && dangKyCuaNhom.id == item.dangkydetaiid) || vaitro == 'TRUONGKHOA')}"
+                    <form th:if="${!item.daKhoa && vaitro == 'TRUONGKHOA'}"
                           th:action="@{'/nopbaocao/' + ${item.id} + '/xoa'}" method="post"
                           data-confirm="Bạn có chắc chắn muốn xóa bản ghi nộp báo cáo này không?"
                           data-modal-title="Thông báo"

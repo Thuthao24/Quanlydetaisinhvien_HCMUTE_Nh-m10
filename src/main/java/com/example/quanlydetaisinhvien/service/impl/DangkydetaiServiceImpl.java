@@ -248,26 +248,7 @@ public class DangkydetaiServiceImpl implements DangkydetaiService {
             return layDanhSachDangKyDto();
         }
 
-        if (account.getVaitro() == Vaitro.TRUONGBOMON) {
-            if (giangvienRepository == null) {
-                return new ArrayList<>();
-            }
 
-            Optional<Giangvien> teacher =
-                giangvienRepository.findByTaikhoanid(account.getId());
-
-            if (teacher.isEmpty() || teacher.get().getBomonid() == null) {
-                return new ArrayList<>();
-            }
-
-            List<Long> ids = detaiRepository.findByBomonid(
-                teacher.get().getBomonid()
-            ).stream().map(Detai::getId).toList();
-
-            return ids.isEmpty() ? new ArrayList<>()
-                : chuyenDanhSachDangKySangDto(
-                    repository.findByDetaiidIn(ids));
-        }
 
         if (account.getVaitro() == Vaitro.GIANGVIEN) {
             if (giangvienRepository == null) {
@@ -601,21 +582,14 @@ public class DangkydetaiServiceImpl implements DangkydetaiService {
             account.getVaitro() == Vaitro.TRUONGKHOA;
 
         if (!authorized && giangvienRepository != null
-                && (account.getVaitro() == Vaitro.TRUONGBOMON
-                    || account.getVaitro() == Vaitro.GIANGVIEN)) {
+                && account.getVaitro() == Vaitro.GIANGVIEN) {
 
             Optional<Giangvien> teacher =
                 giangvienRepository.findByTaikhoanid(account.getId());
 
             if (teacher.isPresent()) {
                 Giangvien g = teacher.get();
-
-                if (account.getVaitro() == Vaitro.TRUONGBOMON
-                        && Objects.equals(
-                            g.getBomonid(), detai.getBomonid())) {
-                    authorized = true;
-                } else if (Objects.equals(
-                        g.getId(), detai.getGiangviendexuatid())) {
+                if (Objects.equals(g.getId(), detai.getGiangviendexuatid())) {
                     authorized = true;
                 }
             }

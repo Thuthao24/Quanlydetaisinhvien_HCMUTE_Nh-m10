@@ -138,7 +138,7 @@ public class KetquaPublicationValidator {
         var account = accounts.findById(lecturer.getTaikhoanid())
                 .orElseThrow(() -> error("Giảng viên " + id + " chưa có tài khoản hợp lệ."));
         if (!Boolean.TRUE.equals(account.getKichhoat()) || account.getVaitro() == null || !Set.of(Vaitro.GIANGVIEN,
-                Vaitro.TRUONGBOMON, Vaitro.TRUONGKHOA).contains(account.getVaitro()))
+                Vaitro.TRUONGKHOA).contains(account.getVaitro()))
             fail("Giảng viên " + id + " không có quyền chấm hoặc tài khoản đã bị khóa.");
     }
 

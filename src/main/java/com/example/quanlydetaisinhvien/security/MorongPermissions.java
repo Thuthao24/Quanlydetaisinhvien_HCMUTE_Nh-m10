@@ -14,7 +14,7 @@ public final class MorongPermissions {
         var auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) throw denied();
         Set<String> allowed = switch (dataset) {
-            case DETAI -> Set.of("ROLE_TRUONGKHOA", "ROLE_TRUONGBOMON", "ROLE_GIANGVIEN");
+            case DETAI -> Set.of("ROLE_TRUONGKHOA", "ROLE_GIANGVIEN");
         };
         if (auth.getAuthorities().stream().noneMatch(a -> allowed.contains(a.getAuthority()))) throw denied();
     }
